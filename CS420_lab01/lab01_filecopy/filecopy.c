@@ -22,7 +22,7 @@ int main(int argc, char** argv)
   char *src_file, *dst_file;
   char data_buf[BUFFER_SIZE];
 
-  // TODO
+
   // Declare any other variables
   // you may need here
 
@@ -33,7 +33,7 @@ int main(int argc, char** argv)
     exit(-1);
   } else {
 
-    // TODO
+
     // Make appropriate assignments if correct
     // number of arguments were supplied
     src_file = argv[1];
@@ -42,7 +42,7 @@ int main(int argc, char** argv)
 
 
 
-  // TODO
+
   // Open the source file, be sure to apply appropriate permissions
   // BE SURE TO CHECK FOR ERRORS WHEN OPENING FILES
   // If an error occurs, report the error and terminate the program
@@ -62,7 +62,6 @@ int main(int argc, char** argv)
     exit(1);
   }
 
-  // TODO
   // Determine the permission of the source file
   // Again, be sure to check for errors!
   struct stat  filestats;
@@ -84,7 +83,7 @@ int main(int argc, char** argv)
     exit(1);
   }
 
-  // TODO
+
   // Open the destination file, be sure to apply appropriate permissions
   // BE SURE TO CHECK FOR ERRORS WHEN OPENING FILES
   // If an error occurs, report the error and terminate the program
@@ -104,7 +103,6 @@ int main(int argc, char** argv)
     exit(1);
   }
 
-  // TODO
   // Output a status message here, something like
   // "Copying AAA to BBB"
   printStr("Copying file ");
@@ -112,19 +110,26 @@ int main(int argc, char** argv)
   printStr(" to destination ");
   printStr(dst_file);
   printStr("\n");
-  // TODO
+
   // Do the work to actually copy the file here
   // Be efficient and copy CHUNKS of data
   // DO NOT COPY ONE BYTE AT AT TIME
   // DO NOT READ THE ENTIRE FILE INTO MEMORY
   // Again, be sure to check for errors!
-//    while(1){
-//        if(read(sfhandle, data_buf, BUFFER_SIZE)< 0)
-//        {
-//            printErr("Error reading file \n");
-//        }
-//
-//    }
+    while(1){
+        int bytes =  read(sfhandle, data_buf, BUFFER_SIZE);
+        if(bytes== 0) //we have reached EOF from source
+        {
+            break;
+        }
+        else if(bytes < 0 ) { //IO error
+            printErr("Error reading source file\n");
+        }
+        int wcode =  write(dfhandle, data_buf, bytes);
+        if(wcode < 0) {
+            printErr("Error writing dest file\n");
+        }
+    }
 
 
 
