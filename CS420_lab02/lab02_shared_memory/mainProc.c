@@ -18,10 +18,14 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  val mem_key = smget(sizeof(struct ipc_struct));
 
-  // TODO:
-  // Insert your code here
+  if(mem_key < 0 ) {
+    printf("Error allocating shared shmemory");
+    return -1;
+  }
 
+  struct ipc_struct* shared_mem = (struct ipc_struct*) shmat(mem_key);
 
 
   return 0;
