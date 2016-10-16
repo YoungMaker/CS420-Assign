@@ -17,6 +17,7 @@ int main(int argc, char** argv)
     char* filename = NULL;  // DO NOT MODIFY THIS VARIABLE NAME
     int num_procs = 0;      // DO NOT MODIFY THIS VARIABLE NAME
     int num_threads = 0;    // DO NOT MODIFY THIS VARIABLE NAME
+    char* thread_amt = NULL;  // store thread num as char* to make passing it into fileWriter.c via execlp easier
 
 
 
@@ -36,17 +37,18 @@ int main(int argc, char** argv)
             case 'p':
                 //todo: handle num processes
                 num_procs = atoi(optarg);
-                printf("num processes is %d\n", num_procs);
+                printf("MAIN: num processes is %d\n", num_procs);
                 break;
             case 't':
                 //todo: handle num threads
+                thread_amt = optarg;
                 num_threads = atoi(optarg);
-                printf("num threads is %d\n", num_threads);
+                printf("MAIN: num threads is %d\n", num_threads);
                 break;
             case 'f':
                 //todo: handle filename
                 filename = optarg;
-                printf("File name is %s\n", filename);
+                printf("MAIN: File name is %s\n", filename);
                 break;
             case '?':
                 fprintf(stderr, "USAGE : ./main -p <num_procs> -t <num_threads> -f <filename>\n"
@@ -62,19 +64,35 @@ int main(int argc, char** argv)
     
     
     // TODO: write initial '0' to file
-    
+    FILE *fhandle = open_file(filename, "w");
+    fprintf(fhandle, "0\n");
+    close_file(fhandle);
     
 
     // TODO: create a named semaphore
+    //TODO: From this point an, all termination paths MUST close semo
+    sem_t *semo = sem_open("awalsh6", O_CREAT);
     
     
-    
-    // TODO: fork off child processes and wait for them to finish
+    // TODO: fork off child processes and wait for them to finish- send them the sem, num threads, and the file name.
+    int pid;
+    for(int i= 0; i< num_procs; i++) {
+        pid = fork();
+        if(pid == 0) {
+           execlp("./fileWriter", "fileWriter", , thread_amt, filename, NULL);
+        }
+        if(pid < 0 ) {
+            //todo: exit, clean sem.
+            if(sem_close(semo)<0) {
+                fprintf(stderr, "MAIN: could not close semaphore!");
+            }
+        }
+    }
 
-    
+    wait(NULL);
     
     // TODO: clean up and close named semaphore
-    
+    sem_close(semo);
     
     
     
