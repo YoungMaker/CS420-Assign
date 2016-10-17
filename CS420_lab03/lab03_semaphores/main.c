@@ -4,6 +4,7 @@
 #include <getopt.h>
 #include <string.h>
 #include <semaphore.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -35,18 +36,18 @@ int main(int argc, char** argv)
     while((opt = getopt(argc, argv, "p:t:f:")) != -1) {
         switch(opt) {
             case 'p':
-                //todo: handle num processes
+                // handle num processes
                 num_procs = atoi(optarg);
                 printf("MAIN: num processes is %d\n", num_procs);
                 break;
             case 't':
-                //todo: handle num threads
+                // handle num threads
                 thread_amt = optarg;
                 num_threads = atoi(optarg);
                 printf("MAIN: num threads is %d\n", num_threads);
                 break;
             case 'f':
-                //todo: handle filename
+                //t handle filename
                 filename = optarg;
                 printf("MAIN: File name is %s\n", filename);
                 break;
@@ -63,17 +64,22 @@ int main(int argc, char** argv)
     }
     
     
-    // TODO: write initial '0' to file
+    // write initial '0' to file
     FILE *fhandle = open_file(filename, "w");
     fprintf(fhandle, "0\n");
     close_file(fhandle);
     
 
-    // TODO: create a named semaphore
-    //TODO: From this point an, all termination paths MUST close semo
-    sem_t *semo = sem_open("awalsh6", O_CREAT);
+    //  create a named semaphore
+    //From this point an, all termination paths MUST close semo
+    sem_t *semo;
+
+    if((semo = sem_open("awalsh6", O_CREAT, 0644, 1)) < 0) {
+        fprintf(stderr, "Main: error opening semaphore");
+        return -1;
+    }
     
-    // TODO: fork off child processes and wait for them to finish- send them the sem, num threads, and the file name.
+    // fork off -p child processes and wait for them to finish- send them num threads, and the file name.
     int pid;
     for(int i= 0; i< num_procs; i++) {
         pid = fork();
@@ -81,17 +87,26 @@ int main(int argc, char** argv)
            execlp("./fileWriter", "fileWriter", thread_amt, filename, NULL);
         }
         if(pid < 0 ) {
-            //todo: exit, clean sem.
+            //exit, clean sem.
             if(sem_close(semo)<0) {
                 fprintf(stderr, "MAIN: could not close semaphore!");
             }
         }
     }
 
-    wait(NULL);
-    
-    // TODO: clean up and close named semaphore
-    sem_close(semo);
+    //wait(NULL); //wait for all child processes to rejoin the main process
+    //wait(NULL) only waits for one child process to change state
+    //this loop waits for waitpid to fail.
+    while ((pid = waitpid(-1, NULL, 0))) {
+        if (errno == ECHILD) {
+            break;
+        }
+    }
+
+    //  clean up and close named semaphore
+    if (sem_close(semo) <0) {
+        fprintf(stderr, "Error closing semaphore awalsh6");
+    }
     
     
     
