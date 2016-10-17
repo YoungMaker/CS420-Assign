@@ -9,12 +9,11 @@
 #include <sys/stat.h>
 #include "utils.h"
 
-
-void *fileOperation(void *params);
 struct params {
     int thread_id;
     char* filename;
 };
+void *fileOperation(void *params);
 
 int main(int argc, char** argv)
 {
@@ -64,17 +63,33 @@ void *fileOperation(void *params) {
         pthread_exit(exit); //how to exit non-cleanly? -1 is an error. Trying this?
     }
     //printf("Thread %d is running, filename is %s\n", args->thread_id, args->filename);
-    //TODO: use sem_wait to gain access  to the &filename resource. Decrement this semaphore
+    //use sem_wait to gain access to the &filename resource. Decrement this semaphore
     if(sem_wait(semo) <0) {
         fprintf(stderr, "FileWriter %d: Error calling sem_wait", getpid());
     } //we should now have exclusive access to the &filename resource
     //all calls to exit the thread should now sem_post
-    //TODO: open file and traverse using fseek to the last line of the file.
-    //FILE *fhandle = open_file(args->filename, "rw");
-    //fseek()
-    printf("Filewriter process %d, thread %d has access to the file now.\n", getpid(), args->thread_id);
-    //TODO: read the last line of the file and convert to integer (atoi()?)
+    //open file handle
+    FILE *fhandle = open_file(args->filename, "rw");
+    printf("Filewriter process %d, thread %d now has access to the file\n", getpid(), args->thread_id);
 
+    int num;
+    fseek(fhandle, 0L, SEEK_END);
+    printf("Filewriter process %d, thread %d the file is %ld bytes long\n", getpid(), args->thread_id, ftell(fhandle));
+    if(ftell(fhandle) > 2) {
+        //TODO: traverse using fseek to the last line of the file.
+    }
+    else {
+        //TODO: read in the first line of the file
+        fseek(fhandle, -2L, SEEK_END);
+        fscanf(fhandle, "%d", &num);
+        printf("Filewriter process %d, thread %d read in integer: %d\n", getpid(), args->thread_id, num );
+    }
+
+
+
+    //TODO: read the last line of the file and convert to integer (atoi()?), close file
+
+    close_file(fhandle);
     //TODO: increment and write out to the last line of the file
     sem_post(semo);
     pthread_exit(0);

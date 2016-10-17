@@ -107,7 +107,9 @@ int main(int argc, char** argv)
     if (sem_close(semo) <0) {
         fprintf(stderr, "Error closing semaphore awalsh6");
     }
-    
+    if(sem_unlink("awalsh6") < 0) {
+        fprintf(stderr, "Error closing semaphore awalsh6");
+    }
     
     
     
