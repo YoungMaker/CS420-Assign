@@ -73,13 +73,12 @@ int main(int argc, char** argv)
     //TODO: From this point an, all termination paths MUST close semo
     sem_t *semo = sem_open("awalsh6", O_CREAT);
     
-    
     // TODO: fork off child processes and wait for them to finish- send them the sem, num threads, and the file name.
     int pid;
     for(int i= 0; i< num_procs; i++) {
         pid = fork();
         if(pid == 0) {
-           execlp("./fileWriter", "fileWriter", , thread_amt, filename, NULL);
+           execlp("./fileWriter", "fileWriter", thread_amt, filename, NULL);
         }
         if(pid < 0 ) {
             //todo: exit, clean sem.
