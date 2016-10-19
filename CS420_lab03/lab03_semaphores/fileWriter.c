@@ -26,8 +26,8 @@ int main(int argc, char** argv)
 
     num_threads = atoi(argv[1]);
     filename = argv[2];
-    printf("FileWriter %d: num threads: %d\n", getpid(), num_threads);
-    printf("FileWriter %d: Filename: %s\n", getpid(), filename);
+    //printf("FileWriter %d: num threads: %d\n", getpid(), num_threads);
+    //printf("FileWriter %d: Filename: %s\n", getpid(), filename);
 
 
     //spawn off t threads!
@@ -69,28 +69,38 @@ void *fileOperation(void *params) {
     } //we should now have exclusive access to the &filename resource
     //all calls to exit the thread should now sem_post
     //open file handle
-    FILE *fhandle = open_file(args->filename, "rw");
+    FILE *fhandle = open_file(args->filename, "a+cat ");
     printf("Filewriter process %d, thread %d now has access to the file\n", getpid(), args->thread_id);
 
-    int num;
+    int num = 0;
     fseek(fhandle, 0L, SEEK_END);
-    printf("Filewriter process %d, thread %d the file is %ld bytes long\n", getpid(), args->thread_id, ftell(fhandle));
+    //printf("FileWriter process %d, thread %d the file is %ld bytes long\n", getpid(), args->thread_id, ftell(fhandle));
     if(ftell(fhandle) > 2) {
         //TODO: traverse using fseek to the last line of the file.
+        fseek(fhandle, -2L, SEEK_END); //seek to one character before the last '\n', so that we do not immediately fgetc the last '\n'
+        int cur = fgetc(fhandle); //this traverses one forward!
+        while(cur != '\n' && ftell(fhandle) > 2 ) {//greater than 0? greater than 2? what is the edge case where we can't find a '\n'?
+            fseek(fhandle, -2L, SEEK_CUR); //traverse two back, this is only if the char read in was not a '\n'
+            cur = fgetc(fhandle); //read and traverse one forward
+            //printf("Filewriter %d, thread %d found char %c at location %ld\n", getpid(), args->thread_id, cur, ftell(fhandle));
+        }
+        //we have now found a'\n' char, now read from the location (which should be just one head of the '\n' if I am correct.
+        fscanf(fhandle, "%d", &num); //read in the next int.
     }
-    else {
-        //TODO: read in the first line of the file
-        fseek(fhandle, -2L, SEEK_END);
-        fscanf(fhandle, "%d", &num);
-        printf("Filewriter process %d, thread %d read in integer: %d\n", getpid(), args->thread_id, num );
-    }
+    //if the file just contains 2 bytes (0\n) we don't need to read anything. All we have to do is increment and print.
+    //increment and store new number
+    num++;
+    fprintf(fhandle, "%d", num);
+    fprintf(fhandle, "\n");
 
 
-
-    //TODO: read the last line of the file and convert to integer (atoi()?), close file
+    //close file
 
     close_file(fhandle);
-    //TODO: increment and write out to the last line of the file
+    //increment semaphore to release hold on filename resource
+
     sem_post(semo);
+    //exit thread cleanly.
+
     pthread_exit(0);
 }

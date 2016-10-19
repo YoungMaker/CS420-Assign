@@ -95,9 +95,9 @@ int main(int argc, char** argv)
     }
 
     //wait(NULL); //wait for all child processes to rejoin the main process
-    //wait(NULL) only waits for one child process to change state
+    //wait(NULL) seems to only wait for one child process to change state, does not seem to comply with MAN page?
     //this loop waits for waitpid to fail.
-    while ((pid = waitpid(-1, NULL, 0))) {
+    while ((pid = waitpid(-1, NULL, 0))) {// copied from http://stackoverflow.com/questions/1510922/waiting-for-all-child-processes-before-parent-resumes-execution-unix
         if (errno == ECHILD) {
             break;
         }
